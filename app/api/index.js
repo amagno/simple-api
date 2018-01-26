@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const faker = require('faker/locale/pt_BR');
 const path = require('path');
-
+const util = require('../util');
 let db = require('../../config/database');
 let api = {};
 
@@ -10,10 +10,10 @@ api.home = (req, res) => {
 };
 
 api.insert = (req, res) => {
-    let contact = req.body;
+    let contact = util.sanitizeContact(req.body);
 
     if (!contact) return;
-
+    
     delete contact._id;
     db.insert(contact, function (err, newDoc) {
         if (err) 
@@ -24,20 +24,6 @@ api.insert = (req, res) => {
         console.log(`${newDoc._id} success written`);
         res.json(newDoc._id);
     });
-};
-const buildRegex = (str = '') => {
-    const strArray = Array.from(str.replace(/\W/ig, ''));
-    const regexArray = strArray.map(word => {
-        if (word === 'a') return '[à-úÀ-ÚaA]';
-        if (word === 'e') return '[à-úÀ-ÚeE]';
-        if (word === 'i') return '[à-úÀ-ÚiI]';
-        if (word === 'o') return '[à-úÀ-ÚoO]';
-        if (word === 'u') return '[à-úÀ-ÚuU]';
-        return word;
-    });
-    const strRegex = regexArray.toString().split(',').join('');
-    console.log(strRegex);
-    return new RegExp(strRegex, 'ig');
 };
 api.list = (req, res) => {
 
@@ -54,18 +40,22 @@ api.list = (req, res) => {
     delete search.page;
     delete search.limit;
 
-    Object.keys(req.query).forEach(key => {
-        console.log('serach server: ', req.query[key]);
-        search[key] = buildRegex(req.query[key]);
-        buildRegex(req.query[key]);
+    Object.keys(search).forEach(key => {
+        search[key] = util.buildSearchRegex(req.query[key]);
+        if (key === 'isFavorite') {
+            if (req.query[key] === 'true') search[key] = true;
+            if (req.query[key] === 'false') search[key] = false;
+            console.log(req.query[key], typeof req.query[key]);
+        }
     });
-
+    console.log(search);
     db.find(search).skip(skip * limit).limit(limit).sort(sort).exec(function (err, doc) {
         if (err) 
             return res.status(500).json({
                 success: false,
                 message: err
             });
+        // console.log(doc);
         res.json(doc);
     });
 };
