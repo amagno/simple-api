@@ -25,11 +25,24 @@ api.insert = (req, res) => {
         res.json(newDoc._id);
     });
 };
-
+const buildRegex = (str = '') => {
+    const strArray = Array.from(str.replace(/\W/ig, ''));
+    const regexArray = strArray.map(word => {
+        if (word === 'a') return '[à-úÀ-ÚaA]';
+        if (word === 'e') return '[à-úÀ-ÚeE]';
+        if (word === 'i') return '[à-úÀ-ÚiI]';
+        if (word === 'o') return '[à-úÀ-ÚoO]';
+        if (word === 'u') return '[à-úÀ-ÚuU]';
+        return word;
+    });
+    const strRegex = regexArray.toString().split(',').join('');
+    console.log(strRegex);
+    return new RegExp(strRegex, 'ig');
+};
 api.list = (req, res) => {
 
-    const search = req.query;
-    const limit = (search.limit) ? parseInt(search.limit) : 10;
+    const search = Object.assign({}, req.query);
+    const limit = (search.limit) ? parseInt(search.limit) : 0;
     const skip = (search.page) ? parseInt(search.page) - 1 : 0;
     const sort = { firstName: 1 };
 
@@ -41,7 +54,11 @@ api.list = (req, res) => {
     delete search.page;
     delete search.limit;
 
-    Object.keys(req.query).forEach(key => search[key] = new RegExp(req.query[key], 'i'));
+    Object.keys(req.query).forEach(key => {
+        console.log('serach server: ', req.query[key]);
+        search[key] = buildRegex(req.query[key]);
+        buildRegex(req.query[key]);
+    });
 
     db.find(search).skip(skip * limit).limit(limit).sort(sort).exec(function (err, doc) {
         if (err) 
