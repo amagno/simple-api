@@ -9,7 +9,6 @@ const buildSearchRegex = (str = '') => {
       return word;
   });
   const strRegex = regexArray.toString().split(',').join('');
-  console.log(strRegex);
   return new RegExp(strRegex, 'ig');
 };
 const sanitizeContact = (contact) => {
@@ -20,6 +19,7 @@ const sanitizeContact = (contact) => {
   if (obj.isFavorite === 'true') {
       obj.isFavorite = true;
   }
+  return obj;
 };
 
 module.exports = {

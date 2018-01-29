@@ -48,7 +48,6 @@ api.list = (req, res) => {
             console.log(req.query[key], typeof req.query[key]);
         }
     });
-    console.log(search);
     db.find(search).skip(skip * limit).limit(limit).sort(sort).exec(function (err, doc) {
         if (err) 
             return res.status(500).json({
